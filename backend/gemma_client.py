@@ -26,7 +26,7 @@ from triage_agent import triage_agent
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 GEMMA_CLOUD_MODEL = os.getenv("GEMMA_CLOUD_MODEL", "google/medgemma-4b-multimodal")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-GEMMA_LOCAL_MODEL = os.getenv("GEMMA_LOCAL_MODEL", "medgemma4:4b")
+GEMMA_LOCAL_MODEL = os.getenv("GEMMA_LOCAL_MODEL", "glm-4.7-flash")  # Using your available model
 GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta"
 
 # ── RAKSHA Function Tools ─────────────────────────────────────────────────────
@@ -489,7 +489,8 @@ Default: English"""
         # Priority order for medical/triage questions
         # Prefer models that are known for instruction following and medical knowledge
         model_priority = [
-            GEMMA_LOCAL_MODEL,
+            "glm-4.7-flash",  # Your available model
+            "qwen3-vl:8b",    # Your available model
             "llama3.2:1b", "llama3.2:3b", "llama3.2:7b",
             "mistral:7b", "phi3:14b", "qwen2:7b",
             "gemma:2b", "gemma:7b"
