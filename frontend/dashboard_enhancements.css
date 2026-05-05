@@ -1,0 +1,248 @@
+/* 
+ * RAKSHA AI — Premium UI/UX Enhancements
+ * Adds modern Glassmorphism, dynamic glowing effects, and a highly polished aesthetic.
+ */
+
+:root {
+  --bg-dark: #07080b;
+  --bg-surface: rgba(22, 24, 32, 0.85);
+  --bg-surface-hover: rgba(30, 34, 46, 0.95);
+  --primary: #6366f1;
+  --primary-glow: rgba(99, 102, 241, 0.6);
+  --danger: #ef4444;
+  --danger-glow: rgba(239, 68, 68, 0.6);
+  --border-glass: rgba(255, 255, 255, 0.12);
+  --text-main: #ffffff;
+  --text-muted: #cbd5e1;
+}
+
+body {
+  background-color: var(--bg-dark);
+  background-image: 
+    radial-gradient(circle at top right, rgba(99, 102, 241, 0.15), transparent 40%),
+    radial-gradient(circle at bottom left, rgba(239, 68, 68, 0.1), transparent 40%),
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 30px 30px, 30px 30px;
+  color: var(--text-main);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Sidebar Enhancements */
+.sidebar {
+  background: rgba(15, 16, 20, 0.75) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-right: 1px solid var(--border-glass) !important;
+  box-shadow: 4px 0 24px rgba(0,0,0,0.6);
+}
+
+.nav-item {
+  border-radius: 12px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  margin-bottom: 4px;
+}
+
+.nav-item:hover {
+  background: var(--bg-surface-hover) !important;
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.nav-item.active {
+  background: linear-gradient(90deg, rgba(99, 102, 241, 0.15), transparent) !important;
+  border-left: 3px solid var(--primary) !important;
+  box-shadow: inset 0 0 20px rgba(99, 102, 241, 0.05);
+}
+
+.nav-item.active .nav-icon {
+  text-shadow: 0 0 15px var(--primary-glow);
+}
+
+/* Dashboard Grid & Cards */
+.stat-card {
+  background: var(--bg-surface) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-glass) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  overflow: hidden;
+  position: relative;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4) !important;
+}
+
+.stat-card:hover::before {
+  opacity: 1;
+}
+
+.stat-value {
+  font-size: 2.5rem !important;
+  font-weight: 800 !important;
+  background: linear-gradient(135deg, #fff, #94a3b8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Map Panel */
+.dashboard-map-panel {
+  background: var(--bg-surface) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-glass) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
+}
+
+.dashboard-map-panel h2 {
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+/* Map specific tweaks */
+.leaflet-container {
+  border-radius: 0 0 16px 16px;
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+
+/* Buttons */
+.btn {
+  border-radius: 10px !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary), #4f46e5) !important;
+  box-shadow: 0 4px 15px var(--primary-glow) !important;
+  border: none !important;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6) !important;
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, var(--danger), #dc2626) !important;
+  box-shadow: 0 4px 15px var(--danger-glow) !important;
+  border: none !important;
+}
+
+.btn-danger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6) !important;
+}
+
+/* Chat Input Area */
+.chat-input-area {
+  background: rgba(20, 22, 30, 0.9) !important;
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border-glass) !important;
+}
+
+.chat-input {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid var(--border-glass) !important;
+  color: white !important;
+  border-radius: 12px !important;
+  transition: all 0.3s;
+}
+
+.chat-input:focus {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px var(--primary-glow) !important;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.1);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+/* AI Assess Premium UI */
+.assess-upload-panel, .assess-results-panel {
+  background: var(--bg-surface) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-glass) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3) !important;
+  padding: 2rem !important;
+}
+
+.upload-zone {
+  background: rgba(99, 102, 241, 0.03) !important;
+  border: 2px dashed rgba(99, 102, 241, 0.4) !important;
+  border-radius: 16px !important;
+  transition: all 0.3s ease !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.upload-zone:hover, .upload-zone.dragover {
+  background: rgba(99, 102, 241, 0.08) !important;
+  border-color: var(--primary) !important;
+  box-shadow: inset 0 0 40px rgba(99, 102, 241, 0.1) !important;
+  transform: scale(1.01);
+}
+
+.form-select {
+  background: rgba(15, 17, 26, 0.6) !important;
+  border: 1px solid var(--border-glass) !important;
+  color: var(--text-main) !important;
+  border-radius: 10px !important;
+  backdrop-filter: blur(8px);
+}
+
+.form-select:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px var(--primary-glow) !important;
+}
+
+.assess-results-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.results-placeholder {
+  margin: auto;
+  opacity: 0.7;
+}
+
+.ai-scan-animation {
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 100%;
+  background: linear-gradient(to bottom, transparent, rgba(99, 102, 241, 0.2), transparent);
+  animation: scan 2s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes scan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}

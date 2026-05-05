@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+.venv
+env/
+venv/
+ENV/
+raksha.db*
+*.log
+
+# Node
+node_modules/
+dist/
+.DS_Store
+
+# OS
+Thumbs.db
+.idea/
+.vscode/
