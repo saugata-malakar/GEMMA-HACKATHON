@@ -833,6 +833,9 @@ function setupTriage() {
     });
   });
 
+  // Auto-capture GPS location on page load for triage
+  captureTriageLocation();
+
   document.getElementById('triageForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -854,6 +857,9 @@ function setupTriage() {
       return;
     }
 
+    // Get current GPS location for this patient
+    const locationData = await getCurrentLocation();
+    
     try {
       const res = await fetch(`${API_BASE}/triage`, {
         method: 'POST',
@@ -862,6 +868,9 @@ function setupTriage() {
           symptoms: symptoms,
           age_estimate: document.getElementById('triageAge').value || null,
           gender: document.getElementById('triageGender').value || null,
+          location: locationData ? { lat: locationData.lat, lng: locationData.lng } : null,
+          location_accuracy: locationData ? locationData.accuracy : null,
+          additional_notes: document.getElementById('triageNotes')?.value || null,
           language: document.getElementById('langSelect').value
         })
       });
@@ -875,34 +884,66 @@ function setupTriage() {
       document.getElementById('customSymptom').value = '';
       document.getElementById('triageAge').value = '';
       
-      // Update result panel
+      // Update result panel with enhanced display
       const resultPanel = document.getElementById('triageResult');
+      
+      // Color mapping for display
+      const colorMap = {
+        'red': { bg: '#ef4444', text: '#fff' },
+        'yellow': { bg: '#f59e0b', text: '#000' },
+        'green': { bg: '#10b981', text: '#fff' },
+        'black': { bg: '#374151', text: '#fff' }
+      };
+      const colors = colorMap[ai.triage_color] || colorMap.yellow;
+      
       resultPanel.innerHTML = `
         <div style="width:100%; text-align:left;">
           <h2 style="margin-bottom:1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">Triage Category Assigned</h2>
           <div style="display:flex; align-items:center; gap:1.5rem; margin-bottom:1.5rem;">
-            <div style="width:100px; height:100px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:var(--${ai.triage_color}); color:${ai.triage_color==='yellow'||ai.triage_color==='green'?'black':'white'}; font-size:2rem; font-weight:800; text-transform:uppercase;">
+            <div style="width:100px; height:100px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:${colors.bg}; color:${colors.text}; font-size:2rem; font-weight:800; text-transform:uppercase;">
               ${ai.triage_color}
             </div>
             <div>
               <p style="font-family:'JetBrains Mono', monospace; color:var(--text-secondary);">ID: ${entry.patient_id}</p>
               <p style="font-weight:600; font-size:1.125rem;">${ai.triage_color === 'red' ? 'IMMEDIATE' : ai.triage_color === 'yellow' ? 'DELAYED' : ai.triage_color === 'green' ? 'MINIMAL' : 'EXPECTANT'}</p>
+              ${data.location_captured ? `<p style="font-size: 0.8rem; color: var(--primary);">📍 GPS: ${data.gps_accuracy_meters?.toFixed(0) || '?'}m accuracy</p>` : ''}
             </div>
           </div>
           
-          <h3 style="font-size:0.875rem; color:var(--text-muted); text-transform:uppercase;">AI Reasoning</h3>
-          <p style="margin-bottom:1rem;">${ai.reasoning || entry.ai_notes}</p>
+          <h3 style="font-size:0.875rem; color:var(--text-muted); text-transform:uppercase;">AI Medical Reasoning</h3>
+          <p style="margin-bottom:1rem;">${ai.medical_summary || entry.ai_notes}</p>
+          
+          ${ai.vital_status ? `
+          <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+            <h4 style="font-size: 0.85rem; color: var(--primary); margin-bottom: 0.5rem;">Vital Assessment</h4>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; font-size: 0.85rem;">
+              <div>Airway: <strong>${ai.airway_status || 'N/A'}</strong></div>
+              <div>Breathing: <strong>${ai.breathing_status || 'N/A'}</strong></div>
+              <div>Circulation: <strong>${ai.circulation_status || 'N/A'}</strong></div>
+            </div>
+          </div>
+          ` : ''}
           
           <h3 style="font-size:0.875rem; color:var(--text-muted); text-transform:uppercase;">Immediate Interventions</h3>
           <ul style="padding-left:1.5rem;">
-            ${(ai.immediate_interventions || []).map(i => `<li>${i}</li>`).join('')}
+            ${(ai.immediate_remedy || []).map(i => `<li>${i}</li>`).join('')}
           </ul>
+          
+          ${ai.transport_priority ? `
+          <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(0,176,255,0.1); border-radius: 8px; border-left: 3px solid var(--primary);">
+            <strong>Transport Priority:</strong> ${ai.transport_priority} | 
+            <strong>Hospital:</strong> ${ai.hospital_type || 'General'} | 
+            <strong>ETA:</strong> ~${ai.estimated_eta_to_hospital || '30'} min
+          </div>
+          ` : ''}
         </div>
       `;
       resultPanel.style.display = 'block';
 
       // Load into log
       fetchTriageLog();
+
+      showToast('Triage entry saved with GPS location', 'success');
 
     } catch (err) {
       console.error(err);
@@ -914,6 +955,42 @@ function setupTriage() {
   });
 
   fetchTriageLog();
+}
+
+// GPS Location helper functions
+let triageLocation = null;
+
+async function captureTriageLocation() {
+  const locationData = await getCurrentLocation();
+  if (locationData) {
+    triageLocation = locationData;
+    console.log('Triage location captured:', locationData);
+  }
+}
+
+async function getCurrentLocation() {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) {
+      console.warn('Geolocation not supported');
+      resolve(null);
+      return;
+    }
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          accuracy: position.coords.accuracy
+        });
+      },
+      (error) => {
+        console.warn('Geolocation error:', error.message);
+        resolve(null);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  });
 }
 
 async function fetchTriageLog() {

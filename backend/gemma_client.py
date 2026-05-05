@@ -500,13 +500,39 @@ If language is Tamil, respond in Tamil. Default is English."""
         image_base64: str,
         disaster_type: Optional[str] = None,
         building_type: Optional[str] = None,
-        language: str = "en"
+        language: str = "en",
+        detailed_analysis: bool = False
     ) -> Dict:
-        """Specialized multimodal damage assessment using Free Web Vision Pipeline."""
+        """
+        Specialized multimodal damage assessment using Free Web Vision Pipeline.
         
-        assessment = await vision_agent.analyze(image_base64, disaster_type or "Unknown", building_type or "Unknown")
+        Args:
+            image_base64: Base64 encoded image
+            disaster_type: Type of disaster (earthquake, flood, etc.)
+            building_type: Type of building affected
+            language: Response language
+            detailed_analysis: If True, performs part-by-part image analysis for more detailed results
+        """
         
-        assessment["model_used"] = "raksha-free-vision (HF+Pollinations)"
+        if detailed_analysis:
+            # Use detailed part-by-part analysis
+            assessment = await vision_agent.analyze_image_parts(
+                image_base64, 
+                disaster_type or "Unknown", 
+                building_type or "Unknown",
+                language
+            )
+            assessment["model_used"] = "raksha-vision-detailed (Multi-aspect Analysis)"
+        else:
+            # Use standard full image analysis
+            assessment = await vision_agent.analyze(
+                image_base64, 
+                disaster_type or "Unknown", 
+                building_type or "Unknown",
+                language
+            )
+            assessment["model_used"] = "raksha-vision-blip-pollinations"
+        
         return assessment
 
     async def generate_triage_guidance(

@@ -1,0 +1,49 @@
+services:
+  - type: web
+    name: raksha-ai-backend
+    region: singapore
+    env: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GOOGLE_API_KEY
+        value: ""
+      - key: GEMMA_CLOUD_MODEL
+        value: google/gemini-1.5-flash
+      - key: OLLAMA_BASE_URL
+        value: http://localhost:11434
+      - key: GEMMA_LOCAL_MODEL
+        value: gemma:4b
+      - key: DATABASE_URL
+        value: /app/data/raksha.db
+      - key: CORS_ORIGINS
+        value: '["*"]'
+      - key: PORT
+        value: 8000
+      - key: DEBUG
+        value: false
+    envVarGroups:
+      - name: Raksha Production
+        vars:
+          - key: GOOGLE_API_KEY
+            value: ""  # Add your key in Render dashboard
+          - key: HUGGINGFACE_TOKEN
+            value: ""  # Optional: for better rate limits
+    disk:
+      enabled: true
+      mountPath: /app/data
+      size: 1GB
+
+  - type: web
+    name: raksha-ai-frontend
+    region: singapore
+    buildCommand: ""
+    startCommand: ""
+    staticPublish: true
+    sourceDir: frontend
+
+metadata:
+  type: backend
+  owner: RAKSHA-AI-Team
+  description: RAKSHA AI - Offline-first Disaster Response Intelligence Platform
+  repoUrl: https://github.com/your-username/raksha-ai

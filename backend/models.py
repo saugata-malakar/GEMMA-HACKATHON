@@ -196,6 +196,8 @@ class TriageCreate(BaseModel):
     gender: Optional[str] = None
     vitals: Dict[str, Any] = {}
     location: Optional[GeoPoint] = None
+    location_accuracy: Optional[float] = None  # GPS accuracy in meters
+    additional_notes: Optional[str] = None
     language: str = "en"
 
 

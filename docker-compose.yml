@@ -9,13 +9,23 @@ services:
       - "8000:8000"
     environment:
       - OLLAMA_BASE_URL=http://host.docker.internal:11434
-      - DATABASE_URL=/data/raksha.db
-      - GEMMA_CLOUD_MODEL=gemma-4-27b-it
-      - GEMMA_LOCAL_MODEL=gemma4:4b
+      - DATABASE_URL=/app/data/raksha.db
+      - GEMMA_CLOUD_MODEL=google/gemini-1.5-flash
+      - GEMMA_LOCAL_MODEL=gemma:4b
+      - CORS_ORIGINS=["*"]
+      - PORT=8000
+      - DEBUG=false
     volumes:
-      - raksha_data:/data
+      - raksha_data:/app/data
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
   raksha_data:
+    driver: local

@@ -369,8 +369,51 @@ async def assess_damage_base64(request: AssessmentRequest):
         image_base64=request.image_base64,
         disaster_type=request.disaster_type.value if request.disaster_type else None,
         building_type=request.building_type,
-        language=request.language
+        language=request.language,
+        detailed_analysis=False
     )
+    return assessment_data
+
+
+class DetailedAssessmentRequest(BaseModel):
+    image_base64: str
+    disaster_type: Optional[str] = None
+    building_type: Optional[str] = None
+    language: str = "en"
+    analysis_type: str = "detailed"  # "detailed" for part-by-part analysis
+
+
+@app.post("/api/v1/assess/detailed")
+async def assess_damage_detailed(request: DetailedAssessmentRequest):
+    """
+    Detailed damage assessment using part-by-part image analysis.
+    Provides more granular analysis across multiple aspects:
+    - Structural damage
+    - Hazard identification
+    - Accessibility assessment
+    - Casualty detection
+    - Surroundings analysis
+    """
+    logger.info(f"Detailed damage assessment requested: {request.disaster_type}, analysis={request.analysis_type}")
+    
+    detailed = request.analysis_type == "detailed"
+    
+    assessment_data = await gemma_client.assess_damage(
+        image_base64=request.image_base64,
+        disaster_type=request.disaster_type,
+        building_type=request.building_type,
+        language=request.language,
+        detailed_analysis=detailed
+    )
+    
+    # Add analysis metadata
+    assessment_data["analysis_timestamp"] = datetime.utcnow().isoformat()
+    assessment_data["features"] = {
+        "part_by_part": detailed,
+        "hazards_identified": len(assessment_data.get("hazards", [])),
+        "severity_score": assessment_data.get("damage_severity", 0)
+    }
+    
     return assessment_data
 
 
@@ -596,13 +639,25 @@ async def dispatch_responder(request: DispatchRequest):
 
 @app.post("/api/v1/triage", status_code=201)
 async def create_triage_entry(request: TriageCreate):
-    """Create a medical triage entry with AI guidance."""
-    # Get AI triage guidance
+    """Create a medical triage entry with AI guidance and GPS location tracking."""
+    # Prepare location dict for the triage agent
+    location_dict = None
+    if request.location:
+        location_dict = {
+            "lat": request.location.lat,
+            "lng": request.location.lng,
+            "accuracy": request.location_accuracy or 10.0  # Default 10m accuracy
+        }
+    
+    # Get AI triage guidance with enhanced location support
     guidance = await gemma_client.generate_triage_guidance(
         symptoms=request.symptoms,
         age_estimate=request.age_estimate,
         vitals=request.vitals,
-        language=request.language
+        language=request.language,
+        fhir_history=None,
+        location=location_dict,
+        additional_notes=request.additional_notes
     )
 
     from models import TriageColor
@@ -619,7 +674,7 @@ async def create_triage_entry(request: TriageCreate):
         symptoms=request.symptoms,
         vitals=request.vitals,
         triage_color=triage_color,
-        ai_notes=guidance.get("reasoning", ""),
+        ai_notes=guidance.get("medical_summary", "") or guidance.get("reasoning", ""),
         location=request.location
     )
 
@@ -629,7 +684,9 @@ async def create_triage_entry(request: TriageCreate):
 
     return {
         "entry": saved.dict(),
-        "ai_guidance": guidance
+        "ai_guidance": guidance,
+        "location_captured": location_dict is not None,
+        "gps_accuracy_meters": request.location_accuracy
     }
 
 
