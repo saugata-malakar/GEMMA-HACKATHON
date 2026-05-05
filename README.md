@@ -1,72 +1,49 @@
-# RAKSHA AI — Offline-First Disaster Response Intelligence
+# 🛡️ RAKSHA AI — Offline-First Disaster Intelligence
+### Powered by Gemma 4 & Ollama
 
-![RAKSHA AI Banner](https://placehold.co/1200x400/0A0F1E/00B0FF?text=RAKSHA+AI)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Render-brightgreen)](https://gemma-hackathon.onrender.com/)
+[![Track](https://img.shields.io/badge/Track-Global_Resilience-blue)](#)
+[![Tech](https://img.shields.io/badge/Tech-Gemma_4-orange)](#)
 
-RAKSHA AI is a fully offline-capable, multimodal disaster response platform powered by Gemma 4. It provides field responders with AI-grade intelligence — damage assessment, medical triage, smart dispatch, and multilingual communication — even when internet infrastructure is completely destroyed.
-
-Created for the **Gemma 4 Good Hackathon**.
-Tracks: **Global Resilience** & **Special Tech (Ollama)**
+**RAKSHA** (Sanskrit for "Protection") is a premium, mission-critical disaster response platform. It provides field responders with AI-grade intelligence—multimodal damage assessment, medical triage, and autonomous coordination—in environments where the internet has completely failed.
 
 ---
 
-## 🌟 Key Capabilities
+## 🚀 Live Deployment
+The platform is globally deployed and accessible here:
+👉 **[https://gemma-hackathon.onrender.com/](https://gemma-hackathon.onrender.com/)**
 
-1. **Multimodal Damage Assessment**: Photograph damage and Gemma 4 vision instantly estimates severity, hazards, and required rescue teams.
-2. **Native Function Calling for Real Actions**: Gemma 4 doesn't just chat; it uses native function calling to *dispatch* responders, *broadcast* alerts, and *generate* routing.
-3. **True Offline Intelligence**: The full system runs locally via Ollama with Gemma 4 4B on edge devices (laptops, mini PCs). 
-4. **Adaptive Cloud Sync**: When internet returns, it automatically switches to Gemma 4 27B via API and syncs local data.
-5. **Medical Triage Intelligence**: AI-guided START protocol triage for mass casualty events.
-6. **22+ Languages**: Native support for diverse disaster-affected communities.
+---
 
-## 🏗️ Architecture
+## ✨ Key Innovations
 
-- **AI Layer**: Gemma 4 4B (Ollama, local) / Gemma 4 27B (Google AI API, cloud)
-- **Backend**: FastAPI (Python), SQLite (offline WAL mode), WebSockets
-- **Frontend**: Vanilla JS, PWA Service Worker, Leaflet.js (offline maps)
-- **Deployment**: Docker Compose
+### 1. 👁️ Zero-Cost Multimodal Intelligence
+Uses a hybrid vision pipeline (HuggingFace BLIP + Pollinations LLM) to analyze disaster footage. It identifies structural damage, life hazards, and trapped persons without requiring expensive GPU infrastructure.
 
-Read the full [Architecture Document](./ARCHITECTURE.md) and [Product Design](./PROJECT_DESIGN.md).
+### 2. 🏥 AI-Guided Medical Triage
+Guides untrained volunteers through the **START Triage Protocol**. The AI assesses symptoms and vitals in real-time to assign life-saving priority levels (Red/Yellow/Green/Black).
 
-## 🚀 Quick Start (Local Deployment)
+### 3. 🤖 Autonomous Overwatch
+A background AI commander that monitors incoming reports and automatically dispatches the nearest available responders to high-severity incidents using **Native Function Calling**.
 
-To run RAKSHA AI locally in full offline mode:
+### 4. 🌐 Multilingual & Offline-First
+- **Offline PWA**: Installable on any smartphone; caches entire UI and logic for 100% offline use.
+- **22+ Languages**: Native support for Hindi, Tamil, Bengali, and more, ensuring local volunteers can act immediately.
 
-### 1. Prerequisites
-- Docker and Docker Compose installed
-- [Ollama](https://ollama.ai) installed locally
+---
 
-### 2. Prepare Local AI
-Start Ollama and pull the Gemma 4 model:
-```bash
-ollama run gemma4:4b
-```
+## 🛠️ Technical Architecture
 
-### 3. Launch RAKSHA
-```bash
-# Clone repository
-git clone https://github.com/your-username/raksha-ai.git
-cd raksha-ai
+- **AI Core**: Gemma 4 4B (Local via Ollama) & Gemma 4 27B (Cloud via Google AI).
+- **Backend**: FastAPI (Python 3.11) with SQLite WAL-mode for high-concurrency offline sync.
+- **Frontend**: Premium "Cyber-Ops" Glassmorphism UI (Vanilla JS/CSS) for maximum performance on field devices.
+- **Deployment**: Dockerized high-availability setup on Render.
 
-# Start services
-docker-compose up -d
-```
+---
 
-Access the dashboard at: `http://localhost:8000`
+## 🏗️ Local Setup
 
-## ⚙️ Configuration
-
-If you want to use the cloud-connected Gemma 4 27B model (for testing/online usage):
-
-1. Copy `.env.example` to `.env` in the `backend/` directory
-2. Add your Google API Key:
-```env
-GOOGLE_API_KEY=your_key_here
-GEMMA_CLOUD_MODEL=gemma-4-27b-it
-```
-
-## 🗺️ Kaggle Submission
-
-Read the official [Kaggle Writeup](./KAGGLE_WRITEUP.md) included in this repository.
-
-## 📜 License
-MIT License
+1. **Clone the Repo**:
+   ```bash
+   git clone https://github.com/saugata-malakar/GEMMA-HACKATHON.git
+   cd GEMMA-HACKATHON
