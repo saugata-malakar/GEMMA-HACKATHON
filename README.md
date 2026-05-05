@@ -11,12 +11,15 @@ Tracks: **Global Resilience** & **Special Tech (Ollama)**
 
 ## 🌟 Key Capabilities
 
-1. **Multimodal Damage Assessment**: Photograph damage and Gemma 4 vision instantly estimates severity, hazards, and required rescue teams.
+1. **Multimodal Damage Assessment**: Photograph damage and Gemma 4 vision instantly estimates severity, hazards, and required rescue teams. Supports part-by-part analysis: structural, hazards, accessibility, casualties, surroundings.
 2. **Native Function Calling for Real Actions**: Gemma 4 doesn't just chat; it uses native function calling to *dispatch* responders, *broadcast* alerts, and *generate* routing.
 3. **True Offline Intelligence**: The full system runs locally via Ollama with Gemma 4 4B on edge devices (laptops, mini PCs). 
 4. **Adaptive Cloud Sync**: When internet returns, it automatically switches to Gemma 4 27B via API and syncs local data.
-5. **Medical Triage Intelligence**: AI-guided START protocol triage for mass casualty events.
-6. **22+ Languages**: Native support for diverse disaster-affected communities.
+5. **Medical Triage Intelligence**: AI-guided START protocol triage with GPS location tracking and ABC assessment (Airway, Breathing, Circulation).
+6. **Triage Q&A System**: Dedicated endpoints for medical questions (`/api/v1/triage/qa`) and START protocol guide (`/api/v1/triage/guide`).
+7. **22+ Languages**: Native support for diverse disaster-affected communities.
+8. **Offline Maps**: Leaflet.js with OpenStreetMap tiles, downloadable for offline use.
+9. **Real-time Coordination**: WebSocket-based live updates for incident management.
 
 ## 🏗️ Architecture
 
@@ -63,6 +66,21 @@ If you want to use the cloud-connected Gemma 4 27B model (for testing/online usa
 GOOGLE_API_KEY=your_key_here
 GEMMA_CLOUD_MODEL=gemma-4-27b-it
 ```
+
+## 📡 API Endpoints
+
+### Core Endpoints
+- `POST /api/v1/chat` — AI assistant chat with function calling
+- `POST /api/v1/vision/analyze` — Image damage assessment
+- `POST /api/v1/triage` — Medical triage entry with GPS
+- `POST /api/v1/triage/qa` — Medical Q&A (Ask START protocol, CPR, bleeding, etc.)
+- `POST /api/v1/triage/guide` — Get START triage protocol guide
+- `POST /api/v1/alerts` — Create emergency alerts
+- `POST /api/v1/routes` — Generate evacuation routes
+- `POST /api/v1/assess/detailed` — Detailed damage assessment (part-by-part)
+
+### WebSocket
+- `ws /ws` — Real-time incident updates
 
 ## 🗺️ Kaggle Submission
 

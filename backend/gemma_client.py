@@ -225,31 +225,71 @@ class GemmaClient:
     Supports text, multimodal (vision), and function calling.
     """
 
-    SYSTEM_PROMPT = """You are RAKSHA AI, an emergency disaster response intelligence assistant.
-You help field responders, incident commanders, and affected citizens during disasters.
+    SYSTEM_PROMPT = """You are RAKSHA AI, a comprehensive emergency response and general assistant AI.
 
-Your capabilities:
-- Assess damage from images with severity scores and hazard identification
-- Provide medical triage guidance following START protocol
-- Coordinate emergency dispatch using available tools
-- Give evacuation guidance and survival protocols
-- Communicate in the user's language (always match the language of the user)
+## YOUR PRIMARY ROLE
+You are a disaster response assistant that can ALSO answer any general question. Don't just focus on emergencies - be helpful for ALL questions.
 
-Core principles:
-1. Lives first — prioritize human safety in every response
-2. Be precise — give specific, actionable guidance, not vague advice
-3. Stay calm — use clear, direct language under pressure
-4. Use tools — when action is needed, call the appropriate function
-5. Acknowledge uncertainty — if unsure, say so and give conservative guidance
+## CORE CAPABILITIES
 
-When analyzing images:
-- Rate damage severity 1-10
-- List all visible hazards
-- Estimate trapped persons if applicable
-- Give specific rescue protocol steps
+### 1. Emergency & Disaster Response (Priority)
+- Medical triage using START protocol (RED, YELLOW, GREEN, BLACK)
+- Damage assessment from images
+- First aid instructions (CPR, bleeding, burns, fractures, shock, choking)
+- Evacuation guidance
+- Emergency protocol explanations
 
-Always respond in the user's language. If language is Hindi, respond in Hindi.
-If language is Tamil, respond in Tamil. Default is English."""
+### 2. General Knowledge (Equally Important)
+- Science, history, geography, mathematics
+- Technology and computing
+- Language and communication
+- Everyday life questions
+- Educational explanations
+- Problem-solving and advice
+
+### 3. Medical/Health Knowledge
+- Human anatomy and physiology
+- Common medical conditions
+- Medication information
+- Health tips and wellness
+- Mental health first aid
+- Nutrition information
+
+### 4. Disaster-Specific Knowledge
+- Earthquakes: drop, cover, hold on
+- Floods: move to higher ground, avoid walking in water
+- Fire: get out, stay out, call 101
+- Cyclones: stay indoors, away from windows
+- Landslides: move away from slopes
+
+## TRIAGE PROTOCOLS (When asked)
+
+START Protocol:
+1. Can they walk? → GREEN
+2. Not breathing → open airway → still not → BLACK
+3. Breathing >30/min → RED
+4. No radial pulse OR cap refill >2sec → RED
+5. Otherwise → YELLOW
+
+CPR: 30 compressions (5-6cm, 100-120/min), 2 breaths
+
+## RESPONSE STYLE
+- Be clear, concise, and helpful
+- Use bullet points for steps
+- Include warnings when relevant
+- Ask follow-up questions if needed
+- Admit when you don't know something
+- Use simple language for complex topics
+
+## IMPORTANT
+You can answer ANY question the user asks. Don't refuse or say you can't help.
+If it's not emergency-related, just answer it helpfully anyway.
+
+Always respond in the user's language.
+Hindi → Hindi response
+Tamil → Tamil response
+English → English response
+Default: English"""
 
     def __init__(self):
         self.selector = model_selector
@@ -442,7 +482,29 @@ If language is Tamil, respond in Tamil. Default is English."""
         enable_tools: bool,
         system_override: Optional[str]
     ) -> Dict:
-        """Chat via Ollama (Gemma 4 4B local)."""
+        """Chat via Ollama (Local models). Tries multiple models for best triage/medical support."""
+        # Try to get available models from Ollama
+        available_models = await self._get_ollama_models()
+        
+        # Priority order for medical/triage questions
+        # Prefer models that are known for instruction following and medical knowledge
+        model_priority = [
+            GEMMA_LOCAL_MODEL,
+            "llama3.2:1b", "llama3.2:3b", "llama3.2:7b",
+            "mistral:7b", "phi3:14b", "qwen2:7b",
+            "gemma:2b", "gemma:7b"
+        ]
+        
+        # Find first available model
+        selected_model = None
+        for model in model_priority:
+            if any(model.replace(":latest", "").replace("-", "_").lower() in m.lower().replace(":latest", "").replace("-", "_") for m in available_models):
+                selected_model = model
+                break
+        
+        if not selected_model:
+            selected_model = GEMMA_LOCAL_MODEL if available_models else "llama3.2:1b"
+        
         # Build messages
         sys_prompt = system_override or self.SYSTEM_PROMPT
         messages = [{"role": "system", "content": sys_prompt}]
@@ -453,8 +515,23 @@ If language is Tamil, respond in Tamil. Default is English."""
                 "content": h.get("content", "")
             })
 
-        lang_instruction = f" [Please respond in language: {language}]" if language != "en" else ""
-        user_content = message + lang_instruction
+        lang_instruction = f"\n[Respond in: {language}]" if language != "en" else ""
+        
+        # Analyze question type and add appropriate context
+        question_lower = message.lower()
+        
+        # Add contextual hints based on question type
+        context_hint = ""
+        if any(kw in question_lower for kw in ["cpr", "triage", "first aid", "bleeding", "burn", "fracture", "choking", "shock", "emergency", "injury", "patient"]):
+            context_hint = "\n[This is a medical/emergency question - provide step-by-step instructions]"
+        elif any(kw in question_lower for kw in ["earthquake", "flood", "fire", "cyclone", "landslide", "disaster", "evacuation"]):
+            context_hint = "\n[This is a disaster question - provide safety protocols]"
+        elif any(kw in question_lower for kw in ["how to", "what is", "why", "explain", "what are", "difference"]):
+            context_hint = "\n[This is an educational question - explain clearly]"
+        elif any(kw in question_lower for kw in ["calculate", "math", "number", "formula"]):
+            context_hint = "\n[This is a math/calculation question - show your work]"
+        
+        user_content = message + lang_instruction + context_hint
 
         # For local model with image
         if image_base64:
@@ -466,34 +543,57 @@ If language is Tamil, respond in Tamil. Default is English."""
         else:
             # Inject tool awareness into prompt for local model
             if enable_tools:
-                tool_prompt = "\n\nAvailable actions you can suggest: dispatch responders, broadcast alerts, evacuation routes, medical triage, resource requests. If an action is needed, clearly state what action should be taken."
-                user_content += tool_prompt
-            messages.append({"role": "user", "content": user_content})
+                tool_prompt = "\n\n[If this requires action, suggest: dispatch responders, broadcast alerts, evacuation routes, medical triage, or resource requests]"
+            else:
+                tool_prompt = ""
+            messages.append({"role": "user", "content": user_content + tool_prompt})
 
         request_body = {
-            "model": GEMMA_LOCAL_MODEL,
+            "model": selected_model,
             "messages": messages,
             "stream": False,
             "options": {
                 "temperature": 0.4,
                 "top_p": 0.9,
-                "num_predict": 1024
+                "num_predict": 2048  # Increased for better medical responses
             }
         }
 
-        async with httpx.AsyncClient(timeout=120, base_url=OLLAMA_BASE_URL) as client:
-            resp = await client.post("/api/chat", json=request_body)
-            resp.raise_for_status()
-            data = resp.json()
+        try:
+            async with httpx.AsyncClient(timeout=120, base_url=OLLAMA_BASE_URL) as client:
+                resp = await client.post("/api/chat", json=request_body)
+                resp.raise_for_status()
+                data = resp.json()
 
-        message_content = data.get("message", {}).get("content", "No response generated.")
+            message_content = data.get("message", {}).get("content", "No response generated.")
 
-        return {
-            "message": message_content,
-            "model_used": GEMMA_LOCAL_MODEL,
-            "function_calls": [],
-            "function_results": []
-        }
+            return {
+                "message": message_content,
+                "model_used": f"ollama:{selected_model}",
+                "function_calls": [],
+                "function_results": []
+            }
+        except Exception as e:
+            logger.error(f"Ollama chat failed: {e}")
+            # Fallback to advanced_ai if Ollama fails
+            return {
+                "message": await advanced_ai.generate_response(message, history, language),
+                "model_used": "fallback:advanced-ai",
+                "function_calls": [],
+                "function_results": []
+            }
+    
+    async def _get_ollama_models(self) -> List[str]:
+        """Get list of available models from Ollama."""
+        try:
+            async with httpx.AsyncClient(timeout=5) as client:
+                resp = await client.get(f"{OLLAMA_BASE_URL}/api/tags")
+                if resp.status_code == 200:
+                    data = resp.json()
+                    return [m.get("name", "") for m in data.get("models", [])]
+        except Exception:
+            pass
+        return []
 
     async def assess_damage(
         self,

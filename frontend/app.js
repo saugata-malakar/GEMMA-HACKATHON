@@ -678,6 +678,55 @@ function setupChat() {
       sendMessage();
     });
   });
+  
+  // Triage Q&A buttons - specialized medical questions
+  document.querySelectorAll('.triage-qa-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const question = btn.getAttribute('data-question');
+      const lang = document.getElementById('langSelect').value;
+      
+      // Show loading
+      messages.insertAdjacentHTML('beforeend', `
+        <div class="msg user">
+          <div class="msg-bubble">🏥 ${question}</div>
+        </div>
+        <div class="typing-indicator" id="typingInd">
+          <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+        </div>
+      `);
+      messages.scrollTop = messages.scrollHeight;
+      
+      try {
+        const res = await fetch(`${API_BASE}/triage/qa`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question, language: lang })
+        });
+        const data = await res.json();
+        
+        // Remove typing indicator
+        const typing = document.getElementById('typingInd');
+        if (typing) typing.remove();
+        
+        // Add response
+        messages.insertAdjacentHTML('beforeend', `
+          <div class="msg ai">
+            <div class="msg-bubble" style="border-left: 3px solid var(--success);">
+              <div style="color: var(--success); font-size: 0.8rem; margin-bottom: 0.5rem;">🏥 MEDICAL GUIDE</div>
+              ${data.answer.replace(/\n/g, '<br>')}
+            </div>
+            <div class="msg-meta">${data.model_used} • ${new Date().toLocaleTimeString()}</div>
+          </div>
+        `);
+      } catch (err) {
+        const typing = document.getElementById('typingInd');
+        if (typing) typing.remove();
+        showToast('Failed to get medical guidance', 'error');
+      }
+      
+      messages.scrollTop = messages.scrollHeight;
+    });
+  });
 }
 
 // ── AI Image Assessment ──

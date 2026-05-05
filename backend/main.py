@@ -696,6 +696,103 @@ async def list_triage(incident_id: Optional[str] = None):
     return {"entries": [e.dict() for e in entries]}
 
 
+# ─── Triage Q&A - Medical Questions ───────────────────────────────────────────────
+
+class TriageQARequest(BaseModel):
+    question: str
+    context: Optional[str] = None  # Optional patient context
+    language: str = "en"
+
+
+@app.post("/api/v1/triage/qa")
+async def triage_qa(request: TriageQARequest):
+    """
+    Answer medical/triage questions using AI.
+    Provides detailed first aid guidance, triage protocol explanations,
+    and emergency medical instructions.
+    """
+    logger.info(f"Triage Q&A: {request.question}")
+    
+    # Build a specialized triage Q&A prompt
+    qa_prompt = f"""You are RAKSHA AI's medical triage expert. Answer this question with detailed, actionable guidance.
+
+Question: {request.question}
+
+{"Context: " + request.context if request.context else ""}
+
+Provide your answer in {request.language} with:
+1. Brief assessment of the situation
+2. Step-by-step action plan
+3. Warnings/precautions to consider
+4. When to seek immediate medical help
+
+If this is about START triage protocol, explain the color categories:
+- RED (Immediate): Life-threatening, treat NOW
+- YELLOW (Delayed): Serious but stable, can wait
+- GREEN (Minimal): Walking wounded
+- BLACK (Expectant): Unlikely to survive, comfort care
+
+Format the response clearly with headers and bullet points."""
+    
+    result = await gemma_client.chat(
+        message=qa_prompt,
+        history=[],
+        enable_tools=False,
+        language=request.language
+    )
+    
+    return {
+        "question": request.question,
+        "answer": result["message"],
+        "model_used": result.get("model_used", "unknown"),
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+
+class StartTriageGuideRequest(BaseModel):
+    patient_count: int = 1
+    language: str = "en"
+
+
+@app.post("/api/v1/triage/guide")
+async def get_start_triage_guide(request: StartTriageGuideRequest):
+    """
+    Get a comprehensive START triage protocol guide.
+    Useful for training and quick reference during mass casualty incidents.
+    """
+    guide_prompt = f"""Provide a comprehensive START (Simple Triage and Rapid Treatment) triage protocol guide.
+    Include for {request.patient_count} patient(s).
+    
+    Explain:
+    1. The 4 triage categories (RED, YELLOW, GREEN, BLACK) with color meanings
+    2. Step-by-step assessment process:
+       - Step 1: Can they walk? → GREEN if yes
+       - Step 2: Breathing - if not breathing, open airway
+       - Step 3: If still not breathing → BLACK
+       - Step 4: Breathing rate >30 → RED
+       - Step 5: No radial pulse OR capillary refill >2sec → RED
+       - Step 6: Otherwise → YELLOW
+    3. How to quickly assess: Airway, Breathing, Circulation, Disability
+    4. Common mistakes to avoid
+    5. What to do while waiting for medical help
+    
+    Provide in {request.language}. Use clear headers and actionable steps."""
+    
+    result = await gemma_client.chat(
+        message=guide_prompt,
+        history=[],
+        enable_tools=False,
+        language=request.language
+    )
+    
+    return {
+        "guide": result["message"],
+        "protocol": "START (Simple Triage and Rapid Treatment)",
+        "model_used": result.get("model_used", "unknown"),
+        "patient_count": request.patient_count
+    }
+
+
 # ─── Alerts ───────────────────────────────────────────────────────────────────
 
 @app.post("/api/v1/alerts", status_code=201)
